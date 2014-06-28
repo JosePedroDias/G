@@ -1,4 +1,4 @@
-var lvl     = require('level');
+var lvl     = require('levelup');
 var memdown = require('memdown');
 
 
@@ -15,22 +15,19 @@ var incrementId = function(oldId) {
 };*/
 
 
-/**
- *
+/*
  * hexastore:
- *   spo,sop,pos,pso,osp,ops : <id> : <id> : <id> -> 
+ *   spo,sop,pos,pso,osp,ops : <id> : predicate : <id>
  *
- * fabio = {name:'fábio', _t:'v', _l:'person'}
- * arroz = {name:'arroz', _t:'v', _l:'food'}
- * gostarDe = nada
- * spo:fabio:gostar_de:arroz = {quantoGosta:'bués'}
- * sop:fabio:arroz:gostar_de = nada
- * spo:fabio:gostar_de:arroz = nada
- * spo:fabio:gostar_de:arroz = nada
- * spo:fabio:gostar_de:arroz = nada
+ * fabio -> {name:'fábio', _t:'v', _l:'person'}
+ * arroz -> {name:'arroz', _t:'v', _l:'food'}
+ * likes -> nothing
+ * spo:fabio:likes:arroz -> nothing
+ * sop:fabio:arroz:likes -> nothing
+ * ..
  *
  * counters:
- *   cnt : <name> : <nr>
+ *   cnt : <name> -> <nr>
  *
  * documents (for vertex and arc):
  *   vtx: <id>
