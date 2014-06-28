@@ -2,8 +2,14 @@
 
 After having a go at [neo4J](http://www.neo4j.org/) and watching
 [@matteocollina](https://twitter.com/@matteocollina)'s
-[How to Cook a Graph Database in a Night](http://nodejsconfit.levelgraph.io/) presentation,
+[How to Cook a Graph Database in a Night](http://nodejsconfit.levelgraph.io/) presentation
+[project repos](https://github.com/mcollina/levelgraph),
 I'm attempting implementing a simple graphdb with JS and leveldb.
+
+
+# algorithms
+
+* [Hexastore: sextuple indexing for semantic web data management C Weiss, P Karras, A Bernstein - Proceedings of the VLDB Endowment, 2008](http://www.vldb.org/pvldb/1/1453965.pdf)
 
 
 # roadmap
@@ -11,8 +17,8 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 * ~~DONE~~ id counters 
 * ~~DONE~~ hexastore implementation (put and fetch back)
 * ~~DONE~~ improved API and added additional properties for arcs
-
-* add timestamps to vertices and arcs? _ct, _mt
+* ~~DONE~~ add timestamps to vertices and arcs? _ct, _mt
+* vertex and arc removal
 * property indexes (bags)
 * unique property indexes
 * make co play nice with leveldown plz (readable examples!)
@@ -38,11 +44,13 @@ g.cV(
 )
 // creates/updates a vertex, returning it's id and updating fields in the given object
 
+
 g.gV(
     {String}   vertexId,
     {Function} cb
 )
 // returns the vertex document
+
 
 g.cA(
     {Object}   arc
@@ -52,6 +60,10 @@ g.cA(
 // arc must have at least subject (either id or object), predicate (string) and object (either id or object)
 // creates an arc from subject to object via predicate, returning it's id and updating fields in the give object
 // assuming updates haven't changed either s, p or o!
+// the property ._i isn't supposed to be changed
+// the property ._t is there just to help you interpret the object, won't be persisted
+// the properties ._ct and ._mt are auto-populated with timestamps
+
 
 g.gA(
     {String}    k,
@@ -59,6 +71,7 @@ g.gA(
     {Function}  cb
 )
 // from one of the 6 hexastore keys, returns the arc
+
 
 g.gAs(
     {String|Object|undefined}  subject,

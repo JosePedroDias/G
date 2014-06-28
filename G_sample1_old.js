@@ -24,11 +24,12 @@ G('./s1.db', function(err, g) { // regular file-backed
 //G(           function(err, g) { // memory-only
     if (err) { return console.error(err); }
 
+    var part = parseInt(process.argv.slice().pop(), 10);
+
 
 
     // PART 1 - create stuff
-
-    if (1) {
+    if (part === 1) {
         // 1) create vertex
         var vAlbertO = {name:'Albert'};
         g.cV(vAlbertO, function(err, vAlbertId) {
@@ -70,8 +71,45 @@ G('./s1.db', function(err, g) { // regular file-backed
     }
 
 
+
+    // PART 2 - update stuff
+    if (part === 2) {
+        // get vertex from its id
+        g.gV('vtx:1', function(err, vO) {
+            if (err) { return console.error(err); }
+
+            console.log('vAlbertO:', js(vO));
+
+            // change properties
+            vO.age = 32;
+
+            // update vertex
+            g.cV(vO, function(err) {
+                if (err) { return console.error(err); }
+
+                // modification time changed
+                console.log('vAlbertO\':', js(vO));
+
+                g.gA('spo:1:likes:2', function(err, aO) {
+                    if (err) { return console.error(err); }
+
+                    console.log('aALikesBO\':', js(aO));
+                });
+            });
+        });
+        return;
+    }
+
+
+
+    // PART 3 - remove stuff
+    if (part === 2) {
+        return;
+    }
+
+
     
-    // PART 2 - query stuff
+    // PART 4 - query stuff
 
     // 1) get vertex back
     var vAlbertId = 'vtx:1';

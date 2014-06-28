@@ -24,9 +24,10 @@ var merge = function(to, from) {
     return to;
 };
 
-/*var ts = function() {
+var ts = function() {
     return Date.now();
-};*/
+};
+
 
 
 /*
@@ -66,15 +67,6 @@ var G = function() {
     var whenGIsReadyCb;
 
     var onDb = function(err, db) {
-
-        if (0) {
-            db.createReadStream()
-                .on('data', function(o) { console.log(o.key, '->', o.value); })
-                .on('end', function() { console.log('END VISITING ALL ITEMS'); });
-            return; // TRAVERSE
-        }
-
-
         var api = {};
 
         var nextId = function(kind, cb) {
@@ -93,7 +85,8 @@ var G = function() {
 
         api.cV = function(vO, cb) {
             var vId = vO._i;
-            
+            var t = ts();
+
             var onceDone = function() {
                 var vOS;
                 try {
@@ -111,10 +104,15 @@ var G = function() {
                 });
             };
 
+            vO._mt = t;
+
             if (vId) {
                 delete vO._t;
                 delete vO._i;
                 return onceDone();
+            }
+            else {
+                vO._ct = t;
             }
 
             nextId('vtx', function(err, newId) {
@@ -122,10 +120,6 @@ var G = function() {
 
                 vId = newId;
 
-                //var t = ts();
-                //vO._ct = t;   // creation time
-                //vO._mt = t;   // modification time
-                
                 onceDone();
             });
         };
@@ -137,6 +131,8 @@ var G = function() {
                 var vO;
                 try {
                     vO = JSON.parse(vOS);
+                    vO._i = vId;
+                    vO._t = 'v';
                 } catch (ex) {
                     return cb(ex);
                 }
@@ -146,10 +142,13 @@ var G = function() {
         };
 
         api.cA = function(o, cb) {
+            var t = ts();
             var aId = o._i;
             var isNew = !aId;
 
+            o._mt = t;
             if (isNew) {
+                o._ct = t;
                 try {
                     aId = api._gAInv(o);
                 } catch (ex) {
@@ -222,6 +221,7 @@ var G = function() {
 
             var aO = api._gA(key);
             var aId = api._gAInv(aO);
+            aO._t = 'a';
 
             if (!fetchVertices) {
                 return cb(null, aO);
@@ -255,7 +255,6 @@ var G = function() {
                 }
 
                 if (left === 0) {
-                    aO._t = 'a';
                     cb(null, aO);
                 }
             };
@@ -266,6 +265,7 @@ var G = function() {
         };
 
         api.gAs = function(sub, pre, obj, fetchAll, cb) {
+            /*jshint maxcomplexity:20*/
             if (!cb) {
                 cb = fetchAll;
                 fetchAll = false;
@@ -311,7 +311,7 @@ var G = function() {
 
                 var gA = function(k, cb) {
                     api.gA(k, true, cb);
-                }
+                };
                 
                 async.map(res, gA, cb);
             });
