@@ -83,6 +83,10 @@ var G = function() {
             });
         };
 
+
+
+        // CREATE|UPDATE
+
         api.cV = function(vO, cb) {
             var vId = vO._i;
             var t = ts();
@@ -121,23 +125,6 @@ var G = function() {
                 vId = newId;
 
                 onceDone();
-            });
-        };
-
-        api.gV = function(vId, cb) {
-            db.get(vId, function(err, vOS) {
-                if (err) { return cb(err); }
-
-                var vO;
-                try {
-                    vO = JSON.parse(vOS);
-                    vO._i = vId;
-                    vO._t = 'v';
-                } catch (ex) {
-                    return cb(ex);
-                }
-
-                cb(null, vO);
             });
         };
 
@@ -199,13 +186,35 @@ var G = function() {
             ], onceDone);
         };
 
-        api._gA = function(key) {
+
+
+        // GET
+
+        api.gV = function(vId, cb) {
+            db.get(vId, function(err, vOS) {
+                if (err) { return cb(err); }
+
+                var vO;
+                try {
+                    vO = JSON.parse(vOS);
+                    vO._i = vId;
+                    vO._t = 'v';
+                } catch (ex) {
+                    return cb(ex);
+                }
+
+                cb(null, vO);
+            });
+        };
+        
+        api._gA = function(key, skipVPrefix) {
+            var vPrefix = skipVPrefix ? '' : 'vtx:';
             var parts = key.substring(0, 3).split('');
             var vals  = key.substring(4).split(':');
             return {
-                subject:   'vtx:' + vals[ parts.indexOf('s') ],
-                predicate:          vals[ parts.indexOf('p') ],
-                object:    'vtx:' + vals[ parts.indexOf('o') ]
+                subject:   vPrefix + vals[ parts.indexOf('s') ],
+                predicate:           vals[ parts.indexOf('p') ],
+                object:    vPrefix + vals[ parts.indexOf('o') ]
             };
         };
 
@@ -263,6 +272,73 @@ var G = function() {
             db.get(aO.subject, onResult.bind({_x:'subject'}));
             db.get(aO.object,  onResult.bind({_x:'object' }));
         };
+
+
+
+        // DELETE
+
+        api.dV = function(v, cb) {
+            var vId = ((typeof v === 'string') ? v : v._i);
+            
+            // get arcs to or from the vertex
+            var gAs = function(args, cb) {
+                api.gAs(args[0], args[2], args[2], cb);
+            };
+            async.map(
+                [
+                    [v,         undefined, undefined],
+                    [undefined, undefined, v]
+                ],
+                gAs,
+                function(err, arcIds) {
+                    if (err) { return cb(err); }
+
+                    // join both sources
+                    arcIds = arcIds[0].concat(arcIds[1]);
+
+                    // delete arcs to or from the vertex
+                    async.map(arcIds, api.dA, function(err) {
+                        if (err) { return cb(err); }
+
+                        // delete the vertex itself
+                        db.del(vId, cb);
+                    });
+                }
+            );
+        };
+
+        api.dA = function(o, cb) {
+            var sub, pre, obj;
+            if (typeof o === 'string') {
+                o = api._gA(o, true);
+                sub = o.subject;
+                pre = o.predicate;
+                obj = o.object;
+            }
+            else {
+                sub = o.subject;
+                pre = o.predicate;
+                obj = o.object;
+
+                if (typeof sub === 'object') { sub = sub._i; }
+                if (typeof obj === 'object') { obj = obj._i; }
+                sub = sub.substring(4);
+                obj = obj.substring(4);
+            }
+
+            db.batch([
+                {type:'del', key:['spo', sub, pre, obj].join(':')},
+                {type:'del', key:['sop', sub, obj, pre].join(':')},
+                {type:'del', key:['pos', pre, obj, sub].join(':')},
+                {type:'del', key:['pso', pre, sub, obj].join(':')},
+                {type:'del', key:['osp', obj, sub, pre].join(':')},
+                {type:'del', key:['ops', obj, pre, sub].join(':')}
+            ], cb);
+        };
+
+
+
+        // SEARCH
 
         api.gAs = function(sub, pre, obj, fetchAll, cb) {
             /*jshint maxcomplexity:20*/

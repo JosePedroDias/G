@@ -103,7 +103,11 @@ G('./s1.db', function(err, g) { // regular file-backed
 
 
     // PART 3 - remove stuff
-    if (part === 2) {
+    if (part === 3) {
+        //g.dA('spo:1:likes:2', ok);
+
+        g.dV('vtx:1', ok); // also removes 'spo:1:likes:2'
+
         return;
     }
 

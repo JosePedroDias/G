@@ -18,9 +18,10 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 * ~~DONE~~ hexastore implementation (put and fetch back)
 * ~~DONE~~ improved API and added additional properties for arcs
 * ~~DONE~~ add timestamps to vertices and arcs? _ct, _mt
-* vertex and arc removal
+* ~~DONE~~ vertex and arc removal
 * property indexes (bags)
 * unique property indexes
+* graph events (vCreated, aCreated, vUpdated, aUpdated, vDeleted, aDeleted)
 * make co play nice with leveldown plz (readable examples!)
 * graph traversal
 * querying language?
@@ -30,26 +31,26 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 # API
 
 ```javascript
+
+// GRAPHDB STARTUP
+
 G({Function}cb)
 // returns memory-only db g
 
 G({String}path, {Function}cb)
 // returns regular db g
 
+
 ----
+
+
+// CREATE/UPDATE
 
 g.cV(
     {Object}   vertexO,
     {Function} cb
 )
 // creates/updates a vertex, returning it's id and updating fields in the given object
-
-
-g.gV(
-    {String}   vertexId,
-    {Function} cb
-)
-// returns the vertex document
 
 
 g.cA(
@@ -65,6 +66,18 @@ g.cA(
 // the properties ._ct and ._mt are auto-populated with timestamps
 
 
+----
+
+
+// GETS
+
+g.gV(
+    {String}   vertexId,
+    {Function} cb
+)
+// returns the vertex document
+
+
 g.gA(
     {String}    k,
     {Boolean}  [fetchVertices=false],
@@ -72,6 +85,31 @@ g.gA(
 )
 // from one of the 6 hexastore keys, returns the arc
 
+
+----
+
+
+// DELETE
+
+g.dV(
+    {String|Object} vertex
+    {Function}      cb
+)
+// deletes the give vertex
+// also deletes any arcs where the vertex is either subject or object
+
+
+g.dA(
+    {String|Object} arc
+    {Function}      cb
+)
+// deletes the given arc
+
+
+----
+
+
+// SEARCH
 
 g.gAs(
     {String|Object|undefined}  subject,
