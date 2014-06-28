@@ -20,7 +20,7 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 
 ```javascript
 G({Function}cb)
-// return memory-only db g
+// returns memory-only db g
 
 G({String}path, {Function}cb)
 // returns regular db g
@@ -31,7 +31,7 @@ g.cV(
 	{Object}   vertexO,
 	{Function} cb
 )
-// creates a vertex, returing it's id and updating fields in the given object
+// creates a vertex, returning it's id and updating fields in the given object
 
 g.gV(
 	{String}   vertexId,
