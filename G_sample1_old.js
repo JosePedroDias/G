@@ -16,6 +16,8 @@ var l = function(a, b) {
     console.log(a, b);
 };
 
+var ok = function(err) { console.log(err ? 'ERR' : 'OK'); };
+
 
 
 G('./s1.db', function(err, g) { // regular file-backed
@@ -23,7 +25,10 @@ G('./s1.db', function(err, g) { // regular file-backed
     if (err) { return console.error(err); }
 
 
-    if (0) {
+
+    // PART 1 - create stuff
+
+    if (1) {
         // 1) create vertex
         var vAlbertO = {name:'Albert'};
         g.cV(vAlbertO, function(err, vAlbertId) {
@@ -49,10 +54,15 @@ G('./s1.db', function(err, g) { // regular file-backed
 
 
                 // 3) create arc
-                g.cA(vAlbertId, 'likes', vBethId, function(err) {
+                var aALikesBO = {subject:vAlbertId, predicate:'likes', object:vBethId, howMuch:1000, forHowLong:'2 years'};
+                g.cA(aALikesBO, function(err, aALikesBId) {
                     if (err) { return console.error(err); }
 
-                    console.log('OK');
+                    // returns the arcId
+                    console.log('aALikesBId:', js(aALikesBId));
+
+                    // the arc object is changed in-place
+                    console.log('aALikesBO:', js(aALikesBO));
                 });
             });
         });
@@ -61,10 +71,9 @@ G('./s1.db', function(err, g) { // regular file-backed
 
 
     
+    // PART 2 - query stuff
 
-
-
-    // get vertex back
+    // 1) get vertex back
     var vAlbertId = 'vtx:1';
     g.gV(vAlbertId, function(err, vAlbertO) {
         if (err) { return console.error(err); }
@@ -74,7 +83,7 @@ G('./s1.db', function(err, g) { // regular file-backed
 
 
 
-    // get another vertex
+    // 2) get another vertex
     var vBethId = 'vtx:2';
     g.gV(vBethId, function(err, vBethO) {
         if (err) { return console.error(err); }
@@ -84,8 +93,28 @@ G('./s1.db', function(err, g) { // regular file-backed
 
 
 
-    // get arch with 0 to 2 indeterminations out of 3
+    // 3) get arc
+    var aALikesBId = 'spo:1:likes:2';
+    g.gA(aALikesBId, function(err, aALikesBO) {
+    //g.gA(aALikesBId, true, function(err, aALikesBO) {
+        if (err) { return console.error(err); }
 
+        console.log('aALikesBO:', js(aALikesBO));
+    });
+
+
+
+    // 4) check all hexastore indices exist
+    g.gA('spo:1:likes:2', true, ok);
+    g.gA('sop:1:2:likes', true, ok);
+    g.gA('pos:likes:2:1', true, ok);
+    g.gA('pso:likes:1:2', true, ok);
+    g.gA('osp:2:1:likes', true, ok);
+    g.gA('ops:2:likes:1', true, ok);
+
+
+
+    // 5) get arch with 0 to 2 indeterminations out of 3
     var predic = 'likes';
     var u;
 
@@ -99,22 +128,7 @@ G('./s1.db', function(err, g) { // regular file-backed
     g.gAs(u,         predic, u,       l);
     g.gAs(u,         u,      vBethId, l);
 
-
-
-    /*g.gA('sop:1:2:likes', true, function(err, aO) {
-        if (err) { return console.error(err); }
-
-        console.log('arc:' + js(aO, 1));
-    });*/
-
-
-
-    g.gA('spo:1:likes:2', true, l);
-    g.gA('sop:1:2:likes', true, l);
-    g.gA('pos:likes:1:2', true, l);
-    g.gA('pso:likes:2:1', true, l);
-    g.gA('osp:2:1:likes', true, l);
-    g.gA('ops:2:likes:1', true, l);
+    g.gAs(u,         u,      vBethId, /*true,*/ l);
 });
 
 

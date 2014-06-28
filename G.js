@@ -1,5 +1,6 @@
 var lvl     = require('levelup');
 var memdown = require('memdown');
+var async   = require('async');
 
 
 
@@ -8,6 +9,19 @@ var n32To10 = function(b32) { return parseInt(b32, 32);  };
 var incrementId = function(oldId) {
     if (!oldId) { oldId = 0; }
     return n10To32( n32To10(oldId) + 1 );
+};
+
+var clone = function(o) {
+    return JSON.parse( JSON.stringify(o) );
+};
+
+var merge = function(to, from) {
+    for (var fk in from) {
+        if (!(fk in to)) {
+            to[fk] = from[fk];
+        }
+    }
+    return to;
 };
 
 /*var ts = function() {
@@ -52,10 +66,11 @@ var G = function() {
     var whenGIsReadyCb;
 
     var onDb = function(err, db) {
+
         if (0) {
             db.createReadStream()
-                .on('data', function(o) { console.log(o); })
-                .on('end', function() { console.log('END'); });
+                .on('data', function(o) { console.log(o.key, '->', o.value); })
+                .on('end', function() { console.log('END VISITING ALL ITEMS'); });
             return; // TRAVERSE
         }
 
@@ -77,24 +92,41 @@ var G = function() {
         };
 
         api.cV = function(vO, cb) {
-            nextId('vtx', function(err, newId) {
-                if (err) { return cb(err); }
-                vO._i = newId; // id
-                vO._t = 'v';   // type
-                //var t = ts();
-                //vO._ct = t;   // creation time
-                //vO._mt = t;   // modification time
+            var vId = vO._i;
+            
+            var onceDone = function() {
                 var vOS;
                 try {
                     vOS = JSON.stringify(vO);
+                    vO._t = 'v';
+                    vO._i = vId;
                 } catch (ex) {
                     return cb(ex);
                 }
 
-                db.put(newId, vOS, function(err) {
+                db.put(vId, vOS, function(err) {
                     if (err) { return cb(err); }
-                    return cb(null, newId);
+
+                    return cb(null, vId);
                 });
+            };
+
+            if (vId) {
+                delete vO._t;
+                delete vO._i;
+                return onceDone();
+            }
+
+            nextId('vtx', function(err, newId) {
+                if (err) { return cb(err); }
+
+                vId = newId;
+
+                //var t = ts();
+                //vO._ct = t;   // creation time
+                //vO._mt = t;   // modification time
+                
+                onceDone();
             });
         };
 
@@ -113,19 +145,59 @@ var G = function() {
             });
         };
 
-        api.cA = function(sub, pre, obj, cb) {
+        api.cA = function(o, cb) {
+            var aId = o._i;
+            var isNew = !aId;
+
+            if (isNew) {
+                try {
+                    aId = api._gAInv(o);
+                } catch (ex) {
+                    return cb(ex);
+                }
+            }
+            else {
+                delete o._t;
+                delete o._i;
+            }
+            
+            var o2 = clone(o); // will retain extra params
+            o._t = 'a';
+            o._i = aId;
+
+            var sub = o.subject;
+            var pre = o.predicate;
+            var obj = o.object;
+
+            delete o2.subject;
+            delete o2.predicate;
+            delete o2.object;
+
             if (typeof sub === 'object') { sub = sub._i; }
             if (typeof obj === 'object') { obj = obj._i; }
             sub = sub.substring(4);
             obj = obj.substring(4);
+
+            var o2S = JSON.stringify(o2);
+
+            var onceDone = function(err) {
+                if (err) { return cb(err); }
+
+                cb(null, aId);
+            };
+
+            if (!isNew) {
+                return db.put(aId, o2S, onceDone);
+            }
+
             db.batch([
-                {type:'put', key:['spo', sub, pre, obj].join(':'), value:' '},
+                {type:'put', key:['spo', sub, pre, obj].join(':'), value:o2S},
                 {type:'put', key:['sop', sub, obj, pre].join(':'), value:' '},
                 {type:'put', key:['pos', pre, obj, sub].join(':'), value:' '},
                 {type:'put', key:['pso', pre, sub, obj].join(':'), value:' '},
                 {type:'put', key:['osp', obj, sub, pre].join(':'), value:' '},
                 {type:'put', key:['ops', obj, pre, sub].join(':'), value:' '}
-            ], cb);
+            ], onceDone);
         };
 
         api._gA = function(key) {
@@ -138,6 +210,10 @@ var G = function() {
             };
         };
 
+        api._gAInv = function(aO) {
+            return ['spo', aO.subject.substring(4), aO.predicate, aO.object.substring(4)].join(':');
+        };
+
         api.gA = function(key, fetchVertices, cb) {
             if (cb === undefined) {
                 cb = fetchVertices;
@@ -145,12 +221,13 @@ var G = function() {
             }
 
             var aO = api._gA(key);
+            var aId = api._gAInv(aO);
 
             if (!fetchVertices) {
                 return cb(null, aO);
             }
 
-            var left = 2;
+            var left = 3;
             var errOccurred = false;
 
             var onResult = function(err, vOS) {
@@ -168,18 +245,32 @@ var G = function() {
                 }
 
                 --left;
-                aO[this] = vO;
+
+                if (this._x !== 'extra') {
+                    vO._t = 'v';
+                    aO[this._x] = vO;    
+                }
+                else {
+                    merge(aO, vO);
+                }
 
                 if (left === 0) {
+                    aO._t = 'a';
                     cb(null, aO);
                 }
             };
 
-            db.get(aO.subject, onResult.bind('subject'));
-            db.get(aO.object,  onResult.bind('object' ));
+            db.get(aId,        onResult.bind({_x:'extra'}));
+            db.get(aO.subject, onResult.bind({_x:'subject'}));
+            db.get(aO.object,  onResult.bind({_x:'object' }));
         };
 
-        api.gAs = function(sub, pre, obj, cb) {
+        api.gAs = function(sub, pre, obj, fetchAll, cb) {
+            if (!cb) {
+                cb = fetchAll;
+                fetchAll = false;
+            }
+
             if (typeof sub === 'object') { sub = sub._i; }
             if (typeof obj === 'object') { obj = obj._i; }
             if (sub) { sub = sub.substring(4); }
@@ -214,7 +305,15 @@ var G = function() {
                 res.push(k);
             })
             .on('end', function() {
-                cb(null, res);
+                if (!fetchAll) {
+                    return cb(null, res);    
+                }
+
+                var gA = function(k, cb) {
+                    api.gA(k, true, cb);
+                }
+                
+                async.map(res, gA, cb);
             });
         };
 

@@ -8,12 +8,17 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 
 # roadmap
 
-* id counters ~~DONE~~
-* hexastore implementation (put and fetch back) ~~DONE~~
+* ~~DONE~~ id counters 
+* ~~DONE~~ hexastore implementation (put and fetch back)
+* ~~DONE~~ improved API and added additional properties for arcs
+
+* add timestamps to vertices and arcs? _ct, _mt
 * property indexes (bags)
 * unique property indexes
+* make co play nice with leveldown plz (readable examples!)
 * graph traversal
 * querying language?
+* add unit tests
 
 
 # API
@@ -28,39 +33,42 @@ G({String}path, {Function}cb)
 ----
 
 g.cV(
-	{Object}   vertexO,
-	{Function} cb
+    {Object}   vertexO,
+    {Function} cb
 )
-// creates a vertex, returning it's id and updating fields in the given object
+// creates/updates a vertex, returning it's id and updating fields in the given object
 
 g.gV(
-	{String}   vertexId,
-	{Function} cb
+    {String}   vertexId,
+    {Function} cb
 )
 // returns the vertex document
 
 g.cA(
-	{String|Object} subject,
-	{String}        predicate,
-	{String|Object} object,
-	{Function}      cb
+    {Object}   arc
+    {Function} cb
 )
-// creates an arc from subject to object via predicate
+// creates/updates an arc.
+// arc must have at least subject (either id or object), predicate (string) and object (either id or object)
+// creates an arc from subject to object via predicate, returning it's id and updating fields in the give object
+// assuming updates haven't changed either s, p or o!
 
 g.gA(
-	 {String}   k,
-	[{Boolean}  fetchVertices=false],
-	 {Function} cb
+    {String}    k,
+    {Boolean}  [fetchVertices=false],
+    {Function}  cb
 )
 // from one of the 6 hexastore keys, returns the arc
 
 g.gAs(
-	{String|Object|undefined} subject,
-	{String|undefined}        predicate,
-	{String|Object|undefined} object,
-	{Function}                cb
+    {String|Object|undefined}  subject,
+    {String|undefined}         predicate,
+    {String|Object|undefined}  object,
+    {Boolean}                 [fetchAll=false],
+    {Function}                 cb
 )
 // accepts 1 to 3 filled arguments, returns matched arcs
+// if fetchAll is ommitted or falsy, oncy arc keys are returned, otherwise their objects and vertices are filled
 ```
 
 
