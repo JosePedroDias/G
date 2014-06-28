@@ -63,27 +63,16 @@ var G = function() {
         var api = {};
 
         var nextId = function(kind, cb) {
-            var highestId;
-            db.createReadStream({
-                reverse: true,
-                limit:   1,
-                values:  false,
-                keys:    true,
-                start:   ['cnt:', kind, ':\xff'].join(''),
-                end:     ['cnt:', kind         ].join('')
-            })
-            .on('data', function(k) {
-                highestId = k;
-            })
-            .on('error', function(err) { cb(err); })
-            .on('end', function() {
-                if (highestId) {
-                    var cutAt = highestId.lastIndexOf(':');
-                    highestId = highestId.substring(cutAt+1);
-                }
-                var newId = incrementId(highestId);
-                db.put(['cnt:', kind, ':', newId].join(''), ' ');
-                cb(null, [kind, ':', newId].join(''));
+            var k = ['cnt:', kind].join('');
+            db.get(k, function(err, currId) {
+                //if (err) { return cb(err); }
+
+                var newId = incrementId(currId);
+                db.put(k, newId, function(err) {
+                    if (err) { return cb(err); }
+
+                    cb(null, [kind, ':', newId].join(''));
+                });
             });
         };
 
