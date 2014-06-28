@@ -25,7 +25,7 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 * make co play nice with leveldown plz (readable examples!)
 * graph traversal
 * querying language?
-* add unit tests
+* extract sample into proper unit tests
 
 
 # API
@@ -69,7 +69,7 @@ g.cA(
 ----
 
 
-// GETS
+// GET
 
 g.gV(
     {String}   vertexId,
@@ -125,5 +125,7 @@ g.gAs(
 
 # limitations
 
-* there can't be more than 1 arc from v1 to v2 named x
-* no node traversal whatsoever so far
+* there can't be more than 1 arc from v1 to v2 named x (use arc properties to store data instead)
+* no node traversal whatsoever _so far_
+* took size of data into account
+* not worried at all for now about how to scale this
