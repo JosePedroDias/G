@@ -62,6 +62,13 @@ g.cV(
 // creates/updates a vertex, returning it's id and updating fields in the given object
 
 
+g.cVs(
+    {Object[]} vertexOs,
+    {Function} cb
+)
+// same as cV but for bulk creates/updates. returns array of ids
+
+
 g.cA(
     {Object}   arc,
     {Function} cb
@@ -73,6 +80,13 @@ g.cA(
 // the property ._i isn't supposed to be changed
 // the property ._t is there just to help you interpret the object, won't be persisted
 // the properties ._ct and ._mt are auto-populated with timestamps
+
+
+g.cAs(
+    {Object[]} arcOs,
+    {Function} cb
+)
+// same as cA but for bulk creates/updates. returns array of ids
 
 
 /*******************************/
@@ -141,11 +155,25 @@ g.dV(
 // also deletes any arcs where the vertex is either subject or object
 
 
+g.dVs(
+    {String[]|Object[]} vertices,
+    {Function} cb
+)
+// same as dV but for bulk deletes
+
+
 g.dA(
     {String|Object} arc,
     {Function}      cb
 )
 // deletes the given arc
+
+
+g.dAs(
+    {String[]|Object[]} arcs,
+    {Function} cb
+)
+// same as dA but for bulk deletes
 
 
 /*******************************/
