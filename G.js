@@ -1,3 +1,7 @@
+'use strict';
+
+
+
 var lvl     = require('levelup');
 var memdown = require('memdown');
 var async   = require('async');
@@ -207,6 +211,39 @@ var G = function() {
             });
         };
         
+        api.gVs = function(vIds, cb) {
+            async.map(vIds, api.gV, cb);
+        };
+
+        api.gVAll = function(fetchObjects, cb) {
+            if (cb === undefined) {
+                cb = fetchObjects;
+                fetchObjects = false;
+            }
+
+            var s = 'vtx:';
+            var res = [];
+
+            db.createReadStream({
+                values: false,
+                start: s,
+                end:   s + '\xff'
+            })
+            .on('data', function(k) {
+                res.push(k);
+            })
+            .on('end', function() {
+                if (!fetchObjects) {
+                    return cb(null, res);    
+                }
+
+                var gV = function(k, cb) {
+                    api.gV(k, cb);
+                };
+                async.map(res, gV, cb);
+            });
+        };
+
         api._gA = function(key, skipVPrefix) {
             var vPrefix = skipVPrefix ? '' : 'vtx:';
             var parts = key.substring(0, 3).split('');
@@ -231,6 +268,7 @@ var G = function() {
             var aO = api._gA(key);
             var aId = api._gAInv(aO);
             aO._t = 'a';
+            aO._i = aId;
 
             if (!fetchVertices) {
                 return cb(null, aO);
@@ -257,6 +295,7 @@ var G = function() {
 
                 if (this._x !== 'extra') {
                     vO._t = 'v';
+                    vO._i = aO[this._x];
                     aO[this._x] = vO;    
                 }
                 else {
@@ -271,6 +310,42 @@ var G = function() {
             db.get(aId,        onResult.bind({_x:'extra'}));
             db.get(aO.subject, onResult.bind({_x:'subject'}));
             db.get(aO.object,  onResult.bind({_x:'object' }));
+        };
+
+        api.gAs = function(aIds, fetchVertices, cb) {
+            var gA = function(aId, cb2) {
+                api.gA(aId, fetchVertices, cb2);
+            };
+            async.map(aIds, gA, cb);
+        };
+
+        api.gAAll = function(fetchVertices, cb) {
+            if (cb === undefined) {
+                cb = fetchVertices;
+                fetchVertices = false;
+            }
+
+            var s = 'spo:';
+            var res = [];
+
+            db.createReadStream({
+                values: false,
+                start: s,
+                end:   s + '\xff'
+            })
+            .on('data', function(k) {
+                res.push(k);
+            })
+            .on('end', function() {
+                if (!fetchVertices) {
+                    return cb(null, res);    
+                }
+
+                var gA = function(k, cb) {
+                    api.gA(k, true, cb);
+                };
+                async.map(res, gA, cb);
+            }); 
         };
 
 
@@ -338,9 +413,48 @@ var G = function() {
 
 
 
+        // FILTER
+
+        api.fV = function(filterFn, vertices, cb) {
+            var onceDone = function() {
+                var res = vertices.filter(filterFn);
+                cb(null, res);
+            };
+
+            if (cb === undefined) {
+                cb = vertices;
+                vertices = undefined;
+                api.gVAll(true, function(err, vertices_) {
+                    if (err) { return cb(err); }
+
+                    vertices = vertices_;
+                    onceDone();
+                });
+                return;
+            }
+
+            if (vertices.length > 0 && typeof vertices[0] === 'string') {
+                api.gVs(vertices, function(err, vertices_) {
+                    if (err) { return cb(err); }
+
+                    vertices = vertices_;
+                    onceDone();
+                });
+            }
+            else {
+                onceDone();
+            }
+        };
+
+
+        //api.fA = function(filterFn, arcs, cb) {
+        //};
+
+
+
         // SEARCH
 
-        api.gAs = function(sub, pre, obj, fetchAll, cb) {
+        api.sAs = function(sub, pre, obj, fetchAll, cb) {
             /*jshint maxcomplexity:20*/
             if (!cb) {
                 cb = fetchAll;

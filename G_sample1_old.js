@@ -102,11 +102,34 @@ G('./s1.db', function(err, g) { // regular file-backed
 
 
 
-    // PART 3 - remove stuff
+    // PART 3 - traverse/filter vertices/arcs
     if (part === 3) {
-        //g.dA('spo:1:likes:2', ok);
+        //g.gVAll(function(err, res) { // ids
+        /*g.gVAll(true, function(err, res) { // complete objects
+            console.log('all vertices:');
+            console.log( js(res, 1) );
+        });
 
-        g.dV('vtx:1', ok); // also removes 'spo:1:likes:2'
+        // g.gAAll(function(err, res) { // ids
+        g.gAAll(true, function(err, res) { // complete objects
+            console.log('all arcs:');
+            console.log( js(res, 1) );
+        });*/
+
+        g.fV(
+            function(vO) { // filter function, maps vO -> Boolean
+                //return true;
+                return vO.age === 32;
+            },
+            //['vtx:1', 'vtx:2'], // optional id of vertices (all if ommitted)
+            function(err, res) {
+                console.log('filtered vertices:');
+                console.log( js(res, 1) );
+            }
+        );
+
+        //g.fA(
+        //);
 
         return;
     }
@@ -114,63 +137,77 @@ G('./s1.db', function(err, g) { // regular file-backed
 
     
     // PART 4 - query stuff
+    if (part === 4) {
+        // 1) get vertex back
+        var vAlbertId = 'vtx:1';
+        g.gV(vAlbertId, function(err, vAlbertO) {
+            if (err) { return console.error(err); }
 
-    // 1) get vertex back
-    var vAlbertId = 'vtx:1';
-    g.gV(vAlbertId, function(err, vAlbertO) {
-        if (err) { return console.error(err); }
-
-        console.log('vAlbertO:', js(vAlbertO));
-    });
-
-
-
-    // 2) get another vertex
-    var vBethId = 'vtx:2';
-    g.gV(vBethId, function(err, vBethO) {
-        if (err) { return console.error(err); }
-
-        console.log('vBethO:', js(vBethO));
-    });
+            console.log('vAlbertO:', js(vAlbertO));
+        });
 
 
 
-    // 3) get arc
-    var aALikesBId = 'spo:1:likes:2';
-    g.gA(aALikesBId, function(err, aALikesBO) {
-    //g.gA(aALikesBId, true, function(err, aALikesBO) {
-        if (err) { return console.error(err); }
+        // 2) get another vertex
+        var vBethId = 'vtx:2';
+        g.gV(vBethId, function(err, vBethO) {
+            if (err) { return console.error(err); }
 
-        console.log('aALikesBO:', js(aALikesBO));
-    });
-
-
-
-    // 4) check all hexastore indices exist
-    g.gA('spo:1:likes:2', true, ok);
-    g.gA('sop:1:2:likes', true, ok);
-    g.gA('pos:likes:2:1', true, ok);
-    g.gA('pso:likes:1:2', true, ok);
-    g.gA('osp:2:1:likes', true, ok);
-    g.gA('ops:2:likes:1', true, ok);
+            console.log('vBethO:', js(vBethO));
+        });
 
 
 
-    // 5) get arch with 0 to 2 indeterminations out of 3
-    var predic = 'likes';
-    var u;
+        // 3) get arc
+        var aALikesBId = 'spo:1:likes:2';
+        g.gA(aALikesBId, function(err, aALikesBO) {
+        //g.gA(aALikesBId, true, function(err, aALikesBO) {
+            if (err) { return console.error(err); }
 
-    g.gAs(vAlbertId, predic, vBethId, l);
+            console.log('aALikesBO:', js(aALikesBO));
+        });
 
-    g.gAs(u,         predic, vBethId, l);
-    g.gAs(vAlbertId, u,      vBethId, l);
-    g.gAs(vAlbertId, predic, u,       l);
 
-    g.gAs(vAlbertId, u,      u,       l);
-    g.gAs(u,         predic, u,       l);
-    g.gAs(u,         u,      vBethId, l);
 
-    g.gAs(u,         u,      vBethId, /*true,*/ l);
+        // 4) check all hexastore indices exist
+        g.gA('spo:1:likes:2', true, ok);
+        g.gA('sop:1:2:likes', true, ok);
+        g.gA('pos:likes:2:1', true, ok);
+        g.gA('pso:likes:1:2', true, ok);
+        g.gA('osp:2:1:likes', true, ok);
+        g.gA('ops:2:likes:1', true, ok);
+
+
+
+        // 5) get arch with 0 to 2 indeterminations out of 3
+        var predic = 'likes';
+        var u;
+
+        g.sAs(vAlbertId, predic, vBethId, l);
+
+        g.sAs(u,         predic, vBethId, l);
+        g.sAs(vAlbertId, u,      vBethId, l);
+        g.sAs(vAlbertId, predic, u,       l);
+
+        g.sAs(vAlbertId, u,      u,       l);
+        g.sAs(u,         predic, u,       l);
+        g.sAs(u,         u,      vBethId, l);
+
+        g.sAs(u,         u,      vBethId, /*true,*/ l);
+
+        return;
+    }
+
+
+
+    // PART 5 - remove stuff
+    if (part === 5) {
+        //g.dA('spo:1:likes:2', ok);
+
+        g.dV('vtx:1', ok); // also removes 'spo:1:likes:2'
+
+        return;
+    }
 });
 
 
