@@ -132,6 +132,10 @@ var G = function() {
             });
         };
 
+        api.cVs = function(vOs, cb) {
+            async.mapSeries(vOs, api.cV, cb);
+        };
+
         api.cA = function(o, cb) {
             var t = ts();
             var aId = o._i;
@@ -188,6 +192,10 @@ var G = function() {
                 {type:'put', key:['osp', obj, sub, pre].join(':'), value:' '},
                 {type:'put', key:['ops', obj, pre, sub].join(':'), value:' '}
             ], onceDone);
+        };
+
+        api.cAs = function(aOs, cb) {
+            async.mapSeries(aOs, api.cA, cb);
         };
 
 
@@ -382,6 +390,10 @@ var G = function() {
             );
         };
 
+        api.dVs = function(vOs, cb) {
+            async.map(vOs, api.dV, cb);
+        };
+
         api.dA = function(o, cb) {
             var sub, pre, obj;
             if (typeof o === 'string') {
@@ -411,11 +423,15 @@ var G = function() {
             ], cb);
         };
 
+        api.dAs = function(aOs, cb) {
+            async.map(aOs, api.dA, cb);
+        };
+
 
 
         // FILTER
 
-        api.fV = function(filterFn, vertices, cb) {
+        api.fVs = function(filterFn, vertices, cb) {
             var onceDone = function() {
                 var res = vertices.filter(filterFn);
                 cb(null, res);
@@ -446,13 +462,75 @@ var G = function() {
             }
         };
 
+        api.fAs = function(filterFn, arcs, cb) {
+            var onceDone = function() {
+                var res = arcs.filter(filterFn);
+                cb(null, res);
+            };
 
-        //api.fA = function(filterFn, arcs, cb) {
-        //};
+            if (cb === undefined) {
+                cb = arcs;
+                arcs = undefined;
+                api.gAAll(true, function(err, arcs_) {
+                    if (err) { return cb(err); }
+
+                    arcs = arcs_;
+                    onceDone();
+                });
+                return;
+            }
+
+            if (arcs.length > 0 && typeof arcs[0] === 'string') {
+                api.gAs(arcs, true, function(err, arcs_) {
+                    if (err) { return cb(err); }
+
+                    arcs = arcs_;
+                    onceDone();
+                });
+            }
+            else {
+                onceDone();
+            }
+        };
+
+        api.fAsAsync = function(filterFnAsync, arcs, cb) { // TODO NOT FINISHED
+            var onceDone = function() {
+                try {
+                    async.filter(arcs, filterFnAsync, function(res) { cb(null, res); });
+                } catch (ex) {
+                    cb(ex);
+                }
+            };
+
+            if (cb === undefined) {
+                cb = arcs;
+                arcs = undefined;
+                api.gAAll(false, function(err, arcs_) {
+                    if (err) { return cb(err); }
+
+                    arcs = arcs_;
+                    onceDone();
+                });
+                return;
+            }
+
+            return onceDone();
+        };
 
 
 
         // SEARCH
+
+        api.eA = function(sub, pre, obj, cb) {
+            if (typeof sub === 'object') { sub = sub._i; }
+            if (typeof obj === 'object') { obj = obj._i; }
+            if (sub) { sub = sub.substring(4); }
+            if (obj) { obj = obj.substring(4); }
+
+            db.get(['spo', sub, pre, obj].join(':'), function(err) {
+                cb(null, !err);
+            });
+        };
 
         api.sAs = function(sub, pre, obj, fetchAll, cb) {
             /*jshint maxcomplexity:20*/

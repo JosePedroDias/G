@@ -19,7 +19,9 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 * ~~DONE~~ improved API and added additional properties for arcs
 * ~~DONE~~ add timestamps to vertices and arcs? _ct, _mt
 * ~~DONE~~ vertex and arc removal
-* list vertices or arcs, filter vertices or arcs
+* ~~DONE~~ list vertices or arcs, filter vertices or arcs
+* ~~DONE~~ more bulk functions: cVs, cAs, dVs, dAs
+* async filter function for arcs: fAsAsync
 * property indexes (bags)
 * unique property indexes
 * graph events (vCreated, aCreated, vUpdated, aUpdated, vDeleted, aDeleted)
@@ -151,21 +153,23 @@ g.dA(
 
 // FILTER
 
-g.fV(
+g.fVs(
     {Function}          filterFn,
     {String[]|Object[]} [vertices],
     {Function}          cb
 )
 // returns all the vertices that fulfill the filterFn
+// filterFn receives vO and should return trueish to keep the vertice in the result
 // if vertices parameter is ommitted, runs against all vertices in the db
 
 
-g.fA(
+g.fAs(
     {Function}          filterFn,
     {String[]|Object[]} [arcs],
     {Function}          cb
 )
 // returns all the arc that fulfill the filterFn
+// filterFn receives aO and should return trueish to keep the arc in the result
 // if arcs parameter is ommitted, runs against all arcs in the db
 
 
@@ -173,6 +177,15 @@ g.fA(
 
 
 // SEARCH
+
+g.eA(
+    {String|Object} subject,
+    {String}        predicate,
+    {String|Object} object,
+    {Function}      cb
+)
+// does arc exist?
+
 
 g.sAs(
     {String|Object|undefined}  subject,

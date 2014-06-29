@@ -27,6 +27,56 @@ G('./s1.db', function(err, g) { // regular file-backed
     var part = parseInt(process.argv.slice().pop(), 10);
 
 
+    // PART 0 - create stuff bulk
+    if (part === 0) {
+        g.cVs([
+            {name:'José Pedro',      gender:'m', bornAt:'1981/01/12'},
+            {name:'Margarida',       gender:'f', bornAt:'1980/11/16'},
+            {name:'Maria',           gender:'f', bornAt:'2012/03/17'},
+            {name:'José Augusto',    gender:'m', bornAt:'1952/03/05'},
+            {name:'Maria de Lurdes', gender:'f', bornAt:'1952/03/01'},
+            {name:'Vera Susana',     gender:'f', bornAt:'1975/04/11'}
+        ], function(err, vIds) {
+            if (err) { return console.error(err); }
+
+            console.log('vIds:', js(vIds));
+            var vZP  = vIds[0];
+            var vGui = vIds[1];
+            var vMi  = vIds[2];
+            var vPai = vIds[3];
+            var vMae = vIds[4];
+            var vSu  = vIds[5];
+
+            g.cAs([
+                {subject:vZP,  predicate:'isParentOf', object:vMi, role:'father'},
+                {subject:vGui, predicate:'isParentOf', object:vMi, role:'mother'},
+                {subject:vPai, predicate:'isParentOf', object:vZP, role:'father'},
+                {subject:vMae, predicate:'isParentOf', object:vZP, role:'mother'},
+                {subject:vPai, predicate:'isParentOf', object:vSu, role:'father'},
+                {subject:vMae, predicate:'isParentOf', object:vSu, role:'mother'}
+            ], function(err, aIds) {
+                if (err) { return console.error(err); }
+
+                console.log('aIds:', js(aIds));
+
+                // children of vMae
+                g.sAs(vMae, 'isParentOf', undefined, true, function(err, res) {
+                    if (err) { return console.error(err); }
+
+                    console.log('children of Maria de Lurdes:');
+                    res.forEach(function(aO) {
+                        console.log(aO.object.name);
+                    });
+
+                    g.eA(vZP, 'isParentOf', vMi, l);
+                    //g.eA(vZP, 'isParentOf', vMae, l);
+                });
+            });
+        });
+        return;
+    }
+
+
 
     // PART 1 - create stuff
     if (part === 1) {
@@ -105,7 +155,7 @@ G('./s1.db', function(err, g) { // regular file-backed
     // PART 3 - traverse/filter vertices/arcs
     if (part === 3) {
         //g.gVAll(function(err, res) { // ids
-        /*g.gVAll(true, function(err, res) { // complete objects
+        g.gVAll(true, function(err, res) { // complete objects
             console.log('all vertices:');
             console.log( js(res, 1) );
         });
@@ -114,9 +164,9 @@ G('./s1.db', function(err, g) { // regular file-backed
         g.gAAll(true, function(err, res) { // complete objects
             console.log('all arcs:');
             console.log( js(res, 1) );
-        });*/
+        });
 
-        g.fV(
+        /*g.fVs(
             function(vO) { // filter function, maps vO -> Boolean
                 //return true;
                 return vO.age === 32;
@@ -126,10 +176,41 @@ G('./s1.db', function(err, g) { // regular file-backed
                 console.log('filtered vertices:');
                 console.log( js(res, 1) );
             }
-        );
+        );*/
 
-        //g.fA(
-        //);
+        /*g.fAs(
+            function(aO) { // filter function, maps aO -> Boolean
+                //return true;
+                return aO.howMuch > 900;
+            },
+            ['spo:1:likes:2'], // optional id of arcs (all if ommitted)
+            function(err, res) {
+                console.log('filtered arcs:');
+                console.log( js(res, 1) );
+            }
+        );*/
+return;
+
+        g.fAsAsync(
+            function(aId, cb) { // async filter function, cb should return true to keep arc. remember arc has no vertices data
+                g.gA(aId, function(err, aO) {
+                    console.log(aO);
+                    cb(true);
+                });
+
+                /*console.log(aO);
+                setImmediate(function() {
+                    // cb(true);
+                    // cb(false);
+                    cb(aO.howMuch > 900);
+                });*/
+            },
+            //['spo:1:likes:2'], // optional id of arcs (all if ommitted)
+            function(err, res) {
+                console.log('filtered arcs:');
+                console.log( js(res, 1) );
+            }
+        );
 
         return;
     }
