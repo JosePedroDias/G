@@ -25,7 +25,6 @@ I'm attempting implementing a simple graphdb with JS and leveldb.
 * property indexes (bags)
 * unique property indexes
 * graph events (vCreated, aCreated, vUpdated, aUpdated, vDeleted, aDeleted)
-* make co play nice with leveldown plz (readable examples!)
 * event-stream instead of discrete multi-steps
 * graph traversal
 * querying language?
