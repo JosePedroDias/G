@@ -3,7 +3,7 @@
 /*jshint esnext:true*/
 
 /**
- * either use node 0.11.x with the --harmony-generators 
+ * either use node 0.11.x with the --harmony-generators
  * or install and call gnode instead (https://github.com/TooTallNate/gnode), which uses facebook regenerator (https://github.com/facebook/regenerator)
  */
 
@@ -81,8 +81,52 @@ G('./s1.db', function(err, g) { // regular file-backed
 
             var isZpParentOfMi = yield gg.eA(vZP, 'isParentOf', vMi);
             console.log(isZpParentOfMi);
-            
+
             return;
+        }
+        else if (part === 1) {
+            var vZP = yield gg.fVs(function(vO) {
+                return (vO.name === 'José Pedro');
+            });
+            vZP = vZP[0];
+            console.log(vZP);
+            vZP.hairColor = 'brown';
+            yield gg.cV(vZP);
+        }
+        else if (part === 2) {
+            var aIds = yield gg.gAAll(); // TODO
+            console.log('aIds:'+ js(aIds));
+            yield gg.dAs(aIds);
+
+            var vIds = yield gg.gVAll();
+            console.log('vIds:'+ js(vIds));
+            yield gg.dVs(vIds);
+        }
+        else if (part === 3) {
+            var t = yield gg.gVAll(true);
+            //console.log('gVAll:\n' + js(t, 1));
+
+            t = yield gg.gAAll(true);
+            //console.log('\ngAAll:\n' + js(t, 1));
+
+            t = yield gg.fVs(
+                function(vO) { // filter function, maps vO -> Boolean
+                    return vO.gender === 'f';
+                }
+                //,['vtx:1', 'vtx:2'], // optional id of vertices (all if ommitted)
+            );
+            console.log('fVs:\n' + js(t, 1));
+
+            t = yield gg.fAs(
+                function(aO) { // filter function, maps aO -> Boolean
+                    return aO.role === 'father';
+                }
+                //,['vtx:1', 'vtx:2'], // optional id of vertices (all if ommitted)
+            );
+            console.log('fAs:\n' + js(t, 1));
+        }
+        else if (part === 4) {
+            // TODO sA, eA
         }
     })();
 

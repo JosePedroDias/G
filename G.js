@@ -154,7 +154,7 @@ var G = function() {
                 delete o._t;
                 delete o._i;
             }
-            
+
             var o2 = clone(o); // will retain extra params
             o._t = 'a';
             o._i = aId;
@@ -218,7 +218,7 @@ var G = function() {
                 cb(null, vO);
             });
         };
-        
+
         api.gVs = function(vIds, cb) {
             async.map(vIds, api.gV, cb);
         };
@@ -242,7 +242,7 @@ var G = function() {
             })
             .on('end', function() {
                 if (!fetchObjects) {
-                    return cb(null, res);    
+                    return cb(null, res);
                 }
 
                 var gV = function(k, cb) {
@@ -304,7 +304,7 @@ var G = function() {
                 if (this._x !== 'extra') {
                     vO._t = 'v';
                     vO._i = aO[this._x];
-                    aO[this._x] = vO;    
+                    aO[this._x] = vO;
                 }
                 else {
                     merge(aO, vO);
@@ -346,14 +346,14 @@ var G = function() {
             })
             .on('end', function() {
                 if (!fetchVertices) {
-                    return cb(null, res);    
+                    return cb(null, res);
                 }
 
                 var gA = function(k, cb) {
                     api.gA(k, true, cb);
                 };
                 async.map(res, gA, cb);
-            }); 
+            });
         };
 
 
@@ -362,7 +362,7 @@ var G = function() {
 
         api.dV = function(v, cb) {
             var vId = ((typeof v === 'string') ? v : v._i);
-            
+
             // get arcs to or from the vertex
             var gAs = function(args, cb) {
                 api.gAs(args[0], args[2], args[2], cb);
@@ -574,13 +574,13 @@ var G = function() {
             })
             .on('end', function() {
                 if (!fetchAll) {
-                    return cb(null, res);    
+                    return cb(null, res);
                 }
 
                 var gA = function(k, cb) {
                     api.gA(k, true, cb);
                 };
-                
+
                 async.map(res, gA, cb);
             });
         };
